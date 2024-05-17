@@ -10,9 +10,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         supportActionBar?.setDisplayShowHomeEnabled(true)
-
 
         val buttonSearch = findViewById<Button>(R.id.button_search)
         val buttonMedia = findViewById<Button>(R.id.button_media)
@@ -36,7 +34,5 @@ class MainActivity : AppCompatActivity() {
             val displayIntent = Intent(this, SettingsActivity::class.java)
             startActivity(displayIntent)
         }
-
-
     }
 }

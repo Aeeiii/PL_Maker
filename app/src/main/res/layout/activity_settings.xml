@@ -126,5 +126,3 @@
             android:src="@drawable/license" />
     </FrameLayout>
 </LinearLayout>
-
-
