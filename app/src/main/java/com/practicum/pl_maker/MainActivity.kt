@@ -11,6 +11,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        supportActionBar?.setDisplayShowHomeEnabled(true)
+
 
         val buttonSearch = findViewById<Button>(R.id.button_search)
         val buttonMedia = findViewById<Button>(R.id.button_media)
@@ -21,10 +23,6 @@ class MainActivity : AppCompatActivity() {
             startActivity(displayIntent)
         }
 
-        //buttonMedia.setOnClickListener {  //после сдачи сделать все через лямбду
-        //  val displayIntent = Intent(this, MediaActivity::class.java)
-        //startActivity(displayIntent)
-        //}
 
         val displayIntentNew = Intent(this, MediaActivity::class.java)
         val buttonMediaClickListener: View.OnClickListener = object : View.OnClickListener {
