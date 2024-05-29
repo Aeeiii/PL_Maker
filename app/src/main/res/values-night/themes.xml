@@ -1,0 +1,20 @@
+<resources>xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.PlaylistMaker" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <item name="colorPrimary">@color/button_text_and_night_background</item>
+        <item name="colorPrimaryVariant">@color/button_text_and_night_background</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/button_text_and_night_background</item>
+        <item name="colorSecondaryVariant">@color/white</item>
+        <item name="colorOnSecondary">@color/settings_icon_night</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- Customize your theme here. -->
+        <item name="colorOnSurface">@color/button_text_and_night_background</item>
+        <item name="colorOnSurfaceVariant">@color/white</item>
+
+    </style>
+
+</resources>
