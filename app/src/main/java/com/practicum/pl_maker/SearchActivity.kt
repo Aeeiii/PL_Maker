@@ -10,8 +10,16 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
 class SearchActivity : AppCompatActivity() {
+
+    private var countValue: String = AMOUNT_DEF
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
@@ -21,6 +29,12 @@ class SearchActivity : AppCompatActivity() {
 
         val inputEditText = findViewById<EditText>(R.id.search)
         val cleanButton = findViewById<ImageView>(R.id.clean_icon)
+
+        val jsonString: String = assets.open("Tracks.json").bufferedReader().use { it.readText() }
+        val trackList = Gson().fromJson<ArrayList<Track>>(
+            jsonString,
+            object : TypeToken<ArrayList<Track>>() {}.type
+        )
 
         inputEditText.setText(countValue)
 
@@ -46,19 +60,21 @@ class SearchActivity : AppCompatActivity() {
             }
         }
         inputEditText.addTextChangedListener(simpleTextWatcher)
+
+        val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        val trackAdapter = TrackAdapter(trackList)
+        recyclerView.adapter = trackAdapter
+
     }
 
-    private var countValue: String = AMOUNT_DEF
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putString(PRODUCT_AMOUNT, countValue)
     }
 
-    companion object {
-        const val PRODUCT_AMOUNT = "TEXT"
-        const val AMOUNT_DEF = ""
-    }
 
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
@@ -76,5 +92,10 @@ class SearchActivity : AppCompatActivity() {
         } else {
             View.VISIBLE
         }
+    }
+
+    private companion object {
+        const val PRODUCT_AMOUNT = "TEXT"
+        const val AMOUNT_DEF = ""
     }
 }
