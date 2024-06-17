@@ -23,14 +23,12 @@ class SettingsActivity : AppCompatActivity() {
         val licenseImage = findViewById<ImageView>(R.id.license_image)
 
         shareImage.setOnClickListener {
-            val sendIntent: Intent = Intent().apply {
+            Intent().apply {
                 action = Intent.ACTION_SEND
                 putExtra(Intent.EXTRA_TEXT, applicationContext.getString(R.string.A_D_link))
                 type = "text/plain"
+                startActivity(Intent.createChooser(this, null))
             }
-
-            val shareIntent = Intent.createChooser(sendIntent, null)
-            startActivity(shareIntent)
         }
 
         helpImage.setOnClickListener {
