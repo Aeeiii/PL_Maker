@@ -1,9 +1,8 @@
 package com.practicum.pl_maker
 
-class Track(
+data class Track(
     val trackName: String,
-    val musicianName: String,
-    val trackTime: String,
+    val artistName: String,
+    val trackTimeMillis: String,
     val artworkUrl100: String
-) {
-}
+)

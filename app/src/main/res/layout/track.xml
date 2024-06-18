@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="60dp">
@@ -43,19 +42,26 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            tools:text="Nirvanaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  aaaaaaaaaaaaaaaaaaaaaaa">
+            tools:text="Nirv">
 
         </TextView>
+
+        <ImageView
+            style="@style/SettingsImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_margin="@dimen/drawable_ellipse_padding"
+            android:src="@drawable/ellipse_1">
+
+        </ImageView>
 
         <TextView
             android:id="@+id/track_timing"
             style="@style/TrackInfo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/drawable_ellipse_padding"
-            android:drawablePadding="@dimen/drawable_ellipse_padding"
-            app:drawableStartCompat="@drawable/ellipse_1"
-            tools:text="55555:01">
+            tools:text="05:01">
 
         </TextView>
     </LinearLayout>

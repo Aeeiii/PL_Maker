@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
     android:background="?attr/colorPrimaryVariant"
     android:orientation="vertical"
     tools:context=".SearchActivity">
@@ -42,8 +43,10 @@
             android:background="@null"
             android:cursorVisible="true"
             android:hint="@string/search"
+            android:imeOptions="actionDone"
             android:inputType="text"
             android:maxLines="1"
+            android:singleLine="true"
             android:textColor="@color/black"
             android:textColorHint="?attr/colorOnSurface"
             android:textCursorDrawable="@drawable/cursor"
@@ -57,20 +60,24 @@
             android:layout_marginEnd="12dp"
             android:src="@drawable/clean"
             android:visibility="gone"
-            app:tint="?attr/colorOnSurface">
+            app:tint="?attr/colorOnSurface"
+            tools:visibility="visible">
 
         </ImageView>
 
     </LinearLayout>
+
+    <include layout="@layout/error_layout" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="24dp"
+        android:backgroundTint="?attr/colorPrimaryVariant"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        tools:listitem="@layout/track"
-        tools:itemCount="9"/>
+        tools:itemCount="1"
+        tools:listitem="@layout/track" />
 
 
 </LinearLayout>

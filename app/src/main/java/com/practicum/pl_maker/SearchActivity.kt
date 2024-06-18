@@ -6,18 +6,36 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.MenuItem
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 class SearchActivity : AppCompatActivity() {
 
-    private var countValue: String = AMOUNT_DEF
+
+    private val iTunesBaseUrl = "https://itunes.apple.com"
+
+    private val retrofit = Retrofit.Builder()
+        .baseUrl(iTunesBaseUrl)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    private val iTunesService = retrofit.create(ITunesSearchApi::class.java)
+
+
+    val trackAdapter = TrackAdapter(trackList)
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,24 +45,13 @@ class SearchActivity : AppCompatActivity() {
         setSupportActionBar(findViewById(R.id.my_toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val inputEditText = findViewById<EditText>(R.id.search)
+        val queryInput = findViewById<EditText>(R.id.search)
         val cleanButton = findViewById<ImageView>(R.id.clean_icon)
-
-        val jsonString: String = assets.open("Tracks.json").bufferedReader().use { it.readText() }
-        val trackList = Gson().fromJson<ArrayList<Track>>(
-            jsonString,
-            object : TypeToken<ArrayList<Track>>() {}.type
-        )
-
-        inputEditText.setText(countValue)
-
-
-        cleanButton.setOnClickListener {
-            inputEditText.setText("")
-            val inputMethodManager =
-                getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
-            inputMethodManager?.hideSoftInputFromWindow(inputEditText.windowToken, 0)
-        }
+        val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
+        val searchErrorImage = findViewById<ImageView>(R.id.search_image_error)
+        val searchErrorText = findViewById<TextView>(R.id.search_text_error)
+        val updateButton = findViewById<Button>(R.id.update_button)
+        val errorLayout: LinearLayout = findViewById(R.id.error_layout)
 
 
         val simpleTextWatcher = object : TextWatcher {
@@ -59,13 +66,97 @@ class SearchActivity : AppCompatActivity() {
             override fun afterTextChanged(s: Editable?) {
             }
         }
-        inputEditText.addTextChangedListener(simpleTextWatcher)
 
-        val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
+
+        fun showConnectionError() {
+            requestStatusFlag = "no connection"
+            trackList.clear()
+            recyclerView.adapter = trackAdapter
+            errorLayout.visibility = View.VISIBLE
+            searchErrorImage.setImageResource(R.drawable.no_internet_error)
+            searchErrorText.setText(R.string.no_connection)
+            updateButton.visibility = View.VISIBLE
+        }
+
+        fun showNoResults() {
+            requestStatusFlag = "no result"
+            recyclerView.adapter = trackAdapter
+            searchErrorImage.setImageResource(R.drawable.light_mode)
+            searchErrorText.setText(R.string.no_find_error)
+            errorLayout.visibility = View.VISIBLE
+            updateButton.visibility = View.GONE
+        }
+
+        fun response() {
+            iTunesService.search(countValue).enqueue(object :
+                Callback<TrackResponse> {
+                override fun onResponse(
+                    call: Call<TrackResponse>,
+                    response: Response<TrackResponse>
+                ) {
+                    trackList.clear()
+                    if (response.code() == 200) {
+                        if (response.body()?.results?.isNotEmpty() == true) {
+                            requestStatusFlag = "done"
+                            errorLayout.visibility = View.GONE
+                            trackList.addAll(response.body()?.results!!)
+                            recyclerView.setItemViewCacheSize(response.body()!!.resultCount)
+                            recyclerView.adapter = trackAdapter
+                        }
+                        if (trackList.isEmpty()) {
+                            showNoResults()
+                        }
+                    } else {
+                        showConnectionError()
+                    }
+                }
+
+                override fun onFailure(call: Call<TrackResponse>, t: Throwable) {
+                    showConnectionError()
+                }
+
+
+            })
+
+        }
+
+        //отрисовываем с учетом сохраненного состояния
+
+        queryInput.setText(countValue)
+        cleanButton.visibility = cleanButtonVisibility(countValue)
+        if (requestStatusFlag == "done") recyclerView.adapter = trackAdapter
+        if (requestStatusFlag == "no result") showNoResults()
+        if (requestStatusFlag == "no connection") showConnectionError()
+
+        //
+
+
+        updateButton.setOnClickListener {
+            response()
+        }
+
+        cleanButton.setOnClickListener {
+            queryInput.setText("")
+            requestStatusFlag = "no request"
+            errorLayout.visibility = View.GONE
+            trackList.clear()
+            recyclerView.adapter = trackAdapter
+            val inputMethodManager =
+                getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+            inputMethodManager?.hideSoftInputFromWindow(queryInput.windowToken, 0)
+            queryInput.clearFocus()
+        }
+
+        queryInput.addTextChangedListener(simpleTextWatcher)
+
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        val trackAdapter = TrackAdapter(trackList)
-        recyclerView.adapter = trackAdapter
+        queryInput.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                response()
+            }
+            false
+        }
 
     }
 
@@ -97,5 +188,9 @@ class SearchActivity : AppCompatActivity() {
     private companion object {
         const val PRODUCT_AMOUNT = "TEXT"
         const val AMOUNT_DEF = ""
+        const val REQUEST_STATUS = "no request"
+        private var countValue: String = AMOUNT_DEF
+        private var requestStatusFlag: String = REQUEST_STATUS
+        private val trackList = ArrayList<Track>()
     }
 }

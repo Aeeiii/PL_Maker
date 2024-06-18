@@ -2,11 +2,14 @@ package com.practicum.pl_maker
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.widget.SwitchCompat
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -21,6 +24,17 @@ class SettingsActivity : AppCompatActivity() {
         val shareImage = findViewById<ImageView>(R.id.settings_image)
         val helpImage = findViewById<ImageView>(R.id.help_image)
         val licenseImage = findViewById<ImageView>(R.id.license_image)
+        val themeSwitch = findViewById<SwitchCompat>(R.id.theme_switch)
+
+        when (resources.configuration.uiMode.and(Configuration.UI_MODE_NIGHT_MASK)) {
+            Configuration.UI_MODE_NIGHT_YES -> themeSwitch.toggle()
+        }
+
+        themeSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (isChecked) AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            else AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        }
+
 
         shareImage.setOnClickListener {
             Intent().apply {

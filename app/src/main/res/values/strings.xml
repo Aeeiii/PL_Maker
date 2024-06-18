@@ -13,4 +13,7 @@
     <string name="A_D_link">https://practicum.yandex.ru/android-developer/</string>
     <string name="license_link">https://yandex.ru/legal/practicum_offer/</string>
     <string name="email_adress">ice.king.13@yandex.ru</string>
+    <string name="no_connection">Проблемы со связью\n\nЗагрузка не удалась. Проверьте \nподключение к интеренету</string>
+    <string name="no_find_error">Ничего не нашлось</string>
+    <string name="update">Обновить</string>
 </resources>
