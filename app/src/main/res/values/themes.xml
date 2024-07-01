@@ -14,6 +14,8 @@
         <!-- Customize your theme here. -->
         <item name="colorOnSurface">@color/search</item>
         <item name="colorOnSurfaceVariant">@color/search_back</item>
+        <item name="trackColor">@color/search_back</item>
+        <item name="colorError">@color/button_text_and_night_background</item>
     </style>
 </resources>
 

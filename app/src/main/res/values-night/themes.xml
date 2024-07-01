@@ -14,6 +14,8 @@
         <!-- Customize your theme here. -->
         <item name="colorOnSurface">@color/button_text_and_night_background</item>
         <item name="colorOnSurfaceVariant">@color/white</item>
+        <item name="trackColor">@color/switch_back_night</item>
+        <item name="colorError">@color/white</item>
 
     </style>
 
