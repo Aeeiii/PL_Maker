@@ -10,7 +10,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import java.util.Locale
 
-class TrackHolder(parent: ViewGroup, private val searchHistory: SearchHistory) :
+class TrackHolder(parent: ViewGroup) :
     RecyclerView.ViewHolder(
         LayoutInflater.from(parent.context)
             .inflate(R.layout.track, parent, false)
@@ -22,7 +22,7 @@ class TrackHolder(parent: ViewGroup, private val searchHistory: SearchHistory) :
     private val trackTiming: TextView = itemView.findViewById(R.id.track_timing)
 
 
-    fun bind(model: Track) {
+    fun bind(model: Track, listener: Listener) {
         trackName.text = model.trackName
         musicianName.text = model.artistName
         trackTiming.text =
@@ -38,9 +38,13 @@ class TrackHolder(parent: ViewGroup, private val searchHistory: SearchHistory) :
 
 
         itemView.setOnClickListener {
-            searchHistory.saveTrack(model)
+            listener.onClickTrackHolder(model)
         }
 
+    }
+
+    interface Listener {
+        fun onClickTrackHolder(track: Track)
     }
 
 }

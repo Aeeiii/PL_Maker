@@ -22,7 +22,7 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class SearchActivity : AppCompatActivity() {
+class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
 
 
     private val iTunesBaseUrl = "https://itunes.apple.com"
@@ -41,6 +41,7 @@ class SearchActivity : AppCompatActivity() {
         setSupportActionBar(findViewById(R.id.my_toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
+
         val queryInput = findViewById<EditText>(R.id.search)
         val cleanButton = findViewById<ImageView>(R.id.clean_icon)
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
@@ -52,13 +53,15 @@ class SearchActivity : AppCompatActivity() {
         val cleanHistoryButton = findViewById<Button>(R.id.clean_history_button)
 
         val sharedPrefs = getSharedPreferences(SEARCH_HISTORY, MODE_PRIVATE)
-        val searchHistory = SearchHistory(sharedPrefs)
-        val trackAdapter = TrackAdapter(trackList, searchHistory)
-        var savedTrackAdapter = TrackAdapter(searchHistory.getSavedTracks(), searchHistory)
+        var searchHistory = SearchHistory(sharedPrefs)
+
+        val trackAdapter = TrackAdapter(trackList, this)
+
 
         fun showSavedTracks() {
+            searchHistory = SearchHistory(sharedPrefs)
+            val savedTrackAdapter = TrackAdapter(searchHistory.getSavedTracks(), this)
             recyclerView.setItemViewCacheSize(searchHistory.savesTracks.size)
-            savedTrackAdapter = TrackAdapter(searchHistory.getSavedTracks(), searchHistory)
             recyclerView.adapter = savedTrackAdapter
             hintMessage.visibility = View.VISIBLE
             cleanHistoryButton.visibility = View.VISIBLE
@@ -73,6 +76,7 @@ class SearchActivity : AppCompatActivity() {
 
 
         val simpleTextWatcher = object : TextWatcher {
+
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
             }
 
@@ -142,7 +146,8 @@ class SearchActivity : AppCompatActivity() {
 
 
         queryInput.setOnFocusChangeListener { view, hasFocus ->
-            if (hasFocus && queryInput.text.isEmpty() && searchHistory.savesTracks.size > 0) showSavedTracks() else hideSavedTracks()
+            searchHistory = SearchHistory(sharedPrefs)
+            if (hasFocus && queryInput.text.isEmpty() && searchHistory.getSavedTracks().size > 0) showSavedTracks() else hideSavedTracks()
         }
 
         //отрисовываем с учетом сохраненного состояния
@@ -184,7 +189,6 @@ class SearchActivity : AppCompatActivity() {
 
         cleanHistoryButton.setOnClickListener {
             searchHistory.cleanHistory()
-            recyclerView.adapter = savedTrackAdapter
             hideSavedTracks()
         }
 
@@ -226,6 +230,7 @@ class SearchActivity : AppCompatActivity() {
         }
     }
 
+
     private companion object {
         const val PRODUCT_AMOUNT = "TEXT"
         const val AMOUNT_DEF = ""
@@ -234,5 +239,11 @@ class SearchActivity : AppCompatActivity() {
         private var countValue: String = AMOUNT_DEF
         private var requestStatusFlag: String = REQUEST_STATUS
         private val trackList = ArrayList<Track>()
+    }
+
+    override fun onClickTrackHolder(track: Track) {
+        val sharedPrefs = getSharedPreferences(SEARCH_HISTORY, MODE_PRIVATE)
+        val searchHistory = SearchHistory(sharedPrefs)
+        searchHistory.saveTrack(track)
     }
 }
