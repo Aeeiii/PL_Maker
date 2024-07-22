@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:animateLayoutChanges="true"
+
     android:background="?attr/colorPrimaryVariant"
     android:orientation="vertical"
     tools:context=".SearchActivity">
@@ -67,17 +67,26 @@
 
     </LinearLayout>
 
-    <include layout="@layout/error_layout" />
+    <include
+        layout="@layout/error_layout"
+        tools:visibility="gone" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="24dp"
-        android:backgroundTint="?attr/colorPrimaryVariant"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        tools:itemCount="1"
-        tools:listitem="@layout/track" />
+
+    <TextView
+        android:id="@+id/hint_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="42dp"
+        android:fontFamily="@font/ys_display_medium"
+        android:text="@string/saved_tracks"
+        android:textColor="?attr/colorError"
+        android:textSize="@dimen/error_text_size"
+        android:visibility="gone">
+
+    </TextView>
+
+    <include layout="@layout/track_list" />
 
 
 </LinearLayout>

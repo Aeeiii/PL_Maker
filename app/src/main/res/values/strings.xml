@@ -16,4 +16,6 @@
     <string name="no_connection">Проблемы со связью\n\nЗагрузка не удалась. Проверьте \nподключение к интеренету</string>
     <string name="no_find_error">Ничего не нашлось</string>
     <string name="update">Обновить</string>
+    <string name="saved_tracks">Вы искали</string>
+    <string name="clean_history">Очистить историю</string>
 </resources>

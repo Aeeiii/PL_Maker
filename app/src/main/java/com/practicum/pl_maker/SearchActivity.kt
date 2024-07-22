@@ -22,20 +22,16 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class SearchActivity : AppCompatActivity() {
+class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
 
 
     private val iTunesBaseUrl = "https://itunes.apple.com"
 
-    private val retrofit = Retrofit.Builder()
-        .baseUrl(iTunesBaseUrl)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
+    private val retrofit =
+        Retrofit.Builder().baseUrl(iTunesBaseUrl).addConverterFactory(GsonConverterFactory.create())
+            .build()
 
     private val iTunesService = retrofit.create(ITunesSearchApi::class.java)
-
-
-    val trackAdapter = TrackAdapter(trackList)
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,6 +41,7 @@ class SearchActivity : AppCompatActivity() {
         setSupportActionBar(findViewById(R.id.my_toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
+
         val queryInput = findViewById<EditText>(R.id.search)
         val cleanButton = findViewById<ImageView>(R.id.clean_icon)
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
@@ -52,13 +49,40 @@ class SearchActivity : AppCompatActivity() {
         val searchErrorText = findViewById<TextView>(R.id.search_text_error)
         val updateButton = findViewById<Button>(R.id.update_button)
         val errorLayout: LinearLayout = findViewById(R.id.error_layout)
+        val hintMessage = findViewById<TextView>(R.id.hint_message)
+        val cleanHistoryButton = findViewById<Button>(R.id.clean_history_button)
+
+        val sharedPrefs = getSharedPreferences(SEARCH_HISTORY, MODE_PRIVATE)
+        var searchHistory = SearchHistory(sharedPrefs)
+
+        val trackAdapter = TrackAdapter(trackList, this)
+
+
+        fun showSavedTracks() {
+            searchHistory = SearchHistory(sharedPrefs)
+            val savedTrackAdapter = TrackAdapter(searchHistory.getSavedTracks(), this)
+            recyclerView.setItemViewCacheSize(searchHistory.savesTracks.size)
+            recyclerView.adapter = savedTrackAdapter
+            hintMessage.visibility = View.VISIBLE
+            cleanHistoryButton.visibility = View.VISIBLE
+            recyclerView.visibility = View.VISIBLE
+        }
+
+        fun hideSavedTracks() {
+            hintMessage.visibility = View.GONE
+            cleanHistoryButton.visibility = View.GONE
+            recyclerView.visibility = View.GONE
+        }
 
 
         val simpleTextWatcher = object : TextWatcher {
+
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
             }
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (queryInput.hasFocus() && s?.isEmpty() == true && searchHistory.savesTracks.size > 0) showSavedTracks() else hideSavedTracks()
+
                 cleanButton.visibility = cleanButtonVisibility(s)
                 countValue = s.toString()
             }
@@ -88,11 +112,9 @@ class SearchActivity : AppCompatActivity() {
         }
 
         fun response() {
-            iTunesService.search(countValue).enqueue(object :
-                Callback<TrackResponse> {
+            iTunesService.search(countValue).enqueue(object : Callback<TrackResponse> {
                 override fun onResponse(
-                    call: Call<TrackResponse>,
-                    response: Response<TrackResponse>
+                    call: Call<TrackResponse>, response: Response<TrackResponse>
                 ) {
                     trackList.clear()
                     if (response.code() == 200) {
@@ -102,6 +124,7 @@ class SearchActivity : AppCompatActivity() {
                             trackList.addAll(response.body()?.results!!)
                             recyclerView.setItemViewCacheSize(response.body()!!.resultCount)
                             recyclerView.adapter = trackAdapter
+                            recyclerView.visibility = View.VISIBLE
                         }
                         if (trackList.isEmpty()) {
                             showNoResults()
@@ -120,13 +143,30 @@ class SearchActivity : AppCompatActivity() {
 
         }
 
+
+
+        queryInput.setOnFocusChangeListener { view, hasFocus ->
+            searchHistory = SearchHistory(sharedPrefs)
+            if (hasFocus && queryInput.text.isEmpty() && searchHistory.getSavedTracks().size > 0) showSavedTracks() else hideSavedTracks()
+        }
+
         //отрисовываем с учетом сохраненного состояния
 
         queryInput.setText(countValue)
         cleanButton.visibility = cleanButtonVisibility(countValue)
-        if (requestStatusFlag == "done") recyclerView.adapter = trackAdapter
-        if (requestStatusFlag == "no result") showNoResults()
-        if (requestStatusFlag == "no connection") showConnectionError()
+        when (requestStatusFlag) {
+            "no request" -> {
+
+            }
+
+            "done" -> {
+                recyclerView.adapter = trackAdapter
+                recyclerView.visibility = View.VISIBLE
+            }
+
+            "no result" -> showNoResults()
+            "no connection" -> showConnectionError()
+        }
 
         //
 
@@ -140,11 +180,16 @@ class SearchActivity : AppCompatActivity() {
             requestStatusFlag = "no request"
             errorLayout.visibility = View.GONE
             trackList.clear()
-            recyclerView.adapter = trackAdapter
+            hideSavedTracks()
             val inputMethodManager =
                 getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
             inputMethodManager?.hideSoftInputFromWindow(queryInput.windowToken, 0)
             queryInput.clearFocus()
+        }
+
+        cleanHistoryButton.setOnClickListener {
+            searchHistory.cleanHistory()
+            hideSavedTracks()
         }
 
         queryInput.addTextChangedListener(simpleTextWatcher)
@@ -185,12 +230,20 @@ class SearchActivity : AppCompatActivity() {
         }
     }
 
+
     private companion object {
         const val PRODUCT_AMOUNT = "TEXT"
         const val AMOUNT_DEF = ""
         const val REQUEST_STATUS = "no request"
+        const val SEARCH_HISTORY = "Search history"
         private var countValue: String = AMOUNT_DEF
         private var requestStatusFlag: String = REQUEST_STATUS
         private val trackList = ArrayList<Track>()
+    }
+
+    override fun onClickTrackHolder(track: Track) {
+        val sharedPrefs = getSharedPreferences(SEARCH_HISTORY, MODE_PRIVATE)
+        val searchHistory = SearchHistory(sharedPrefs)
+        searchHistory.saveTrack(track)
     }
 }

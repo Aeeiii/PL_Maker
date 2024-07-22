@@ -17,11 +17,12 @@ class TrackHolder(parent: ViewGroup) :
     ) {
 
     private val trackIcon: ImageView = itemView.findViewById(R.id.track_icon)
-    private val trackName: TextView = itemView.findViewById(R.id.track_name)
+    private var trackName: TextView = itemView.findViewById(R.id.track_name)
     private val musicianName: TextView = itemView.findViewById(R.id.musician_name)
     private val trackTiming: TextView = itemView.findViewById(R.id.track_timing)
 
-    fun bind(model: Track) {
+
+    fun bind(model: Track, listener: Listener) {
         trackName.text = model.trackName
         musicianName.text = model.artistName
         trackTiming.text =
@@ -35,6 +36,15 @@ class TrackHolder(parent: ViewGroup) :
             .placeholder(R.drawable.dura)
             .into(trackIcon)
 
+
+        itemView.setOnClickListener {
+            listener.onClickTrackHolder(model)
+        }
+
+    }
+
+    interface Listener {
+        fun onClickTrackHolder(track: Track)
     }
 
 }
