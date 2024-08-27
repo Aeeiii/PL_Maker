@@ -3,6 +3,8 @@ package com.practicum.pl_maker
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.MenuItem
@@ -13,6 +15,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -35,6 +38,9 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
 
     private val iTunesService = retrofit.create(ITunesSearchApi::class.java)
 
+    private var isClickAllowed = true
+    private val handler = Handler(Looper.getMainLooper())
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +59,7 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
         val errorLayout: LinearLayout = findViewById(R.id.error_layout)
         val hintMessage = findViewById<TextView>(R.id.hint_message)
         val cleanHistoryButton = findViewById<Button>(R.id.clean_history_button)
+        val progressBar = findViewById<ProgressBar>(R.id.progressBar)
 
         val sharedPrefs = getSharedPreferences(SEARCH_HISTORY, MODE_PRIVATE)
         var searchHistory = SearchHistory(sharedPrefs)
@@ -76,21 +83,12 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
             recyclerView.visibility = View.GONE
         }
 
-
-        val simpleTextWatcher = object : TextWatcher {
-
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-            }
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if (queryInput.hasFocus() && s?.isEmpty() == true && searchHistory.savesTracks.size > 0) showSavedTracks() else hideSavedTracks()
-
-                cleanButton.visibility = cleanButtonVisibility(s)
-                countValue = s.toString()
-            }
-
-            override fun afterTextChanged(s: Editable?) {
-            }
+        fun hideAll() {
+            hintMessage.visibility = View.GONE
+            cleanHistoryButton.visibility = View.GONE
+            recyclerView.visibility = View.GONE
+            errorLayout.visibility = View.GONE
+            updateButton.visibility = View.GONE
         }
 
 
@@ -114,35 +112,64 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
         }
 
         fun response() {
-            iTunesService.search(countValue).enqueue(object : Callback<TrackResponse> {
-                override fun onResponse(
-                    call: Call<TrackResponse>, response: Response<TrackResponse>
-                ) {
-                    trackList.clear()
-                    if (response.code() == 200) {
-                        if (response.body()?.results?.isNotEmpty() == true) {
-                            requestStatusFlag = "done"
-                            errorLayout.visibility = View.GONE
-                            trackList.addAll(response.body()?.results!!)
-                            recyclerView.setItemViewCacheSize(response.body()!!.resultCount)
-                            recyclerView.adapter = trackAdapter
-                            recyclerView.visibility = View.VISIBLE
+            if (countValue == "") {
+                requestStatusFlag = "no request"
+            } else {
+                hideAll()
+                progressBar.visibility = View.VISIBLE
+                iTunesService.search(countValue).enqueue(object : Callback<TrackResponse> {
+                    override fun onResponse(
+                        call: Call<TrackResponse>, response: Response<TrackResponse>
+                    ) {
+                        progressBar.visibility =View.GONE
+                        trackList.clear()
+                        if (response.code() == 200) {
+                            if (response.body()?.results?.isNotEmpty() == true) {
+                                requestStatusFlag = "done"
+                                errorLayout.visibility = View.GONE
+                                trackList.addAll(response.body()?.results!!)
+                                recyclerView.setItemViewCacheSize(response.body()!!.resultCount)
+                                recyclerView.adapter = trackAdapter
+                                recyclerView.visibility = View.VISIBLE
+                            }
+                            if (trackList.isEmpty()) {
+                                showNoResults()
+                            }
+                        } else {
+                            showConnectionError()
                         }
-                        if (trackList.isEmpty()) {
-                            showNoResults()
-                        }
-                    } else {
+                    }
+
+                    override fun onFailure(call: Call<TrackResponse>, t: Throwable) {
                         showConnectionError()
                     }
-                }
+                })
+            }
+        }
 
-                override fun onFailure(call: Call<TrackResponse>, t: Throwable) {
-                    showConnectionError()
-                }
+        val searchRunnable = Runnable { response() }
 
+        fun searchDebounce() {
+            handler.removeCallbacks(searchRunnable)
+            handler.postDelayed(searchRunnable, SEARCH_DEBOUNCE_DELAY)
+        }
 
-            })
+        val simpleTextWatcher = object : TextWatcher {
 
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+
+                searchDebounce()
+                if (queryInput.hasFocus() && s?.isEmpty() == true && searchHistory.savesTracks.size > 0) showSavedTracks() else hideSavedTracks()
+
+                cleanButton.visibility = cleanButtonVisibility(s)
+                countValue = s.toString()
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+            }
         }
 
 
@@ -158,7 +185,7 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
         cleanButton.visibility = cleanButtonVisibility(countValue)
         when (requestStatusFlag) {
             "no request" -> {
-
+                hideAll()
             }
 
             "done" -> {
@@ -241,16 +268,32 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
         private var countValue: String = AMOUNT_DEF
         private var requestStatusFlag: String = REQUEST_STATUS
         private val trackList = ArrayList<Track>()
+        private const val SEARCH_DEBOUNCE_DELAY = 2000L
+        private const val CLICK_DEBOUNCE_DELAY = 1000L
+    }
+
+
+
+    private fun clickDebounce() : Boolean {
+        val current = isClickAllowed
+        if (isClickAllowed) {
+            isClickAllowed = false
+            handler.postDelayed({ isClickAllowed = true }, CLICK_DEBOUNCE_DELAY)
+        }
+        return current
     }
 
     override fun onClickTrackHolder(track: Track) {
-        val sharedPrefs = getSharedPreferences(SEARCH_HISTORY, MODE_PRIVATE)
-        val searchHistory = SearchHistory(sharedPrefs)
-        searchHistory.saveTrack(track)
-        val displayIntent = Intent(this, PlayerActivity::class.java)
-        val gson = Gson()
-        val json = gson.toJson(track)
-        displayIntent.putExtra("track", json)
-        startActivity(displayIntent)
+        if (clickDebounce()) {
+            val sharedPrefs = getSharedPreferences(SEARCH_HISTORY, MODE_PRIVATE)
+            val searchHistory = SearchHistory(sharedPrefs)
+            searchHistory.saveTrack(track)
+            val displayIntent = Intent(this, PlayerActivity::class.java)
+            val gson = Gson()
+            val json = gson.toJson(track)
+            displayIntent.putExtra("track", json)
+            startActivity(displayIntent)
+        }
+
     }
 }
