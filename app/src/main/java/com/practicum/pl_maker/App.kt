@@ -8,6 +8,7 @@ class App : Application() {
 
     private var darkTheme = false
 
+
     override fun onCreate() {
         super.onCreate()
 
@@ -21,21 +22,11 @@ class App : Application() {
         darkTheme = darkThemeEnabled
         val sharedPrefs = getSharedPreferences(THEME, MODE_PRIVATE)
 
-        AppCompatDelegate.setDefaultNightMode(
-            if (darkThemeEnabled) {
-                sharedPrefs
-                    .edit()
-                    .putBoolean(THEME_KEY, darkTheme)
-                    .apply()
-                AppCompatDelegate.MODE_NIGHT_YES
-            } else {
-                sharedPrefs
-                    .edit()
-                    .putBoolean(THEME_KEY, darkTheme)
-                    .apply()
-                AppCompatDelegate.MODE_NIGHT_NO
-            }
-        )
+        sharedPrefs
+            .edit()
+            .putBoolean(THEME_KEY, darkTheme)
+            .apply()
+        AppCompatDelegate.setDefaultNightMode(if (darkThemeEnabled) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO)
     }
 
     private companion object {

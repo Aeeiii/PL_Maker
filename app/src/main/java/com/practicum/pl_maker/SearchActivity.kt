@@ -1,6 +1,7 @@
 package com.practicum.pl_maker
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -16,6 +17,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.gson.Gson
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -245,5 +247,10 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
         val sharedPrefs = getSharedPreferences(SEARCH_HISTORY, MODE_PRIVATE)
         val searchHistory = SearchHistory(sharedPrefs)
         searchHistory.saveTrack(track)
+        val displayIntent = Intent(this, PlayerActivity::class.java)
+        val gson = Gson()
+        val json = gson.toJson(track)
+        displayIntent.putExtra("track", json)
+        startActivity(displayIntent)
     }
 }
