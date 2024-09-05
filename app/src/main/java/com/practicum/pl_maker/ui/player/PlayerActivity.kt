@@ -1,17 +1,20 @@
-package com.practicum.pl_maker
+package com.practicum.pl_maker.ui.player
 
 import android.icu.text.SimpleDateFormat
 import android.media.MediaPlayer
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.MenuItem
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
-import com.google.gson.Gson
+import com.practicum.pl_maker.R
+import com.practicum.pl_maker.domain.models.Track
 import java.util.Locale
 
 class PlayerActivity : AppCompatActivity() {
@@ -24,22 +27,26 @@ class PlayerActivity : AppCompatActivity() {
         private const val DELAY = 500L
     }
 
+
     private var mediaPlayer = MediaPlayer()
     private lateinit var playButton: ImageView
     private var mainThreadHandler: Handler? = null
     private var actualTime: TextView? = null
     private var playerState = STATE_DEFAULT
 
+    private lateinit var track: Track
+
+    private val dateFormat by lazy { SimpleDateFormat("mm:ss", Locale.getDefault()) }
+
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_player)
 
         setSupportActionBar(findViewById(R.id.my_toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
-        val intent = intent
-        val gson = Gson()
-        val track = gson.fromJson(intent.getStringExtra("track"), Track::class.java)
+        track = intent.getParcelableExtra("track", Track::class.java)!!
 
         val trackIcon = findViewById<ImageView>(R.id.track_icon)
         val trackName = findViewById<TextView>(R.id.track_name)
@@ -52,6 +59,7 @@ class PlayerActivity : AppCompatActivity() {
         val country = findViewById<TextView>(R.id.country_track)
         val url = track.previewUrl
 
+
         playButton = findViewById(R.id.play_button)
         actualTime = findViewById(R.id.actual_time)
         actualTime?.text = "00:00"
@@ -61,8 +69,7 @@ class PlayerActivity : AppCompatActivity() {
 
         trackName.text = track.trackName
         musicianName.text = track.artistName
-        trackTiming.text =
-            SimpleDateFormat("mm:ss", Locale.getDefault()).format(track.trackTimeMillis.toInt())
+        trackTiming.text = dateFormat.format(track.trackTimeMillis?.toInt())
         trackAlbum.text = track.collectionName
         trackYear.text = track.getYear()
         genre.text = track.primaryGenreName
@@ -76,7 +83,11 @@ class PlayerActivity : AppCompatActivity() {
             .placeholder(R.drawable.placeholder)
             .into(trackIcon)
 
-        preparePlayer(url)
+
+        if (url != null) {
+            preparePlayer(url)
+        }
+
         playButton.setOnClickListener {
             playbackControl()
         }
@@ -156,14 +167,14 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun pauseTimer() {
-        actualTime?.text = SimpleDateFormat("mm:ss", Locale.getDefault()).format(mediaPlayer.currentPosition)
+        actualTime?.text = dateFormat.format(mediaPlayer.currentPosition)
         mainThreadHandler?.removeCallbacksAndMessages(null)
     }
 
     private fun createUpdateTimerTask(): Runnable {
         return object : Runnable {
             override fun run() {
-                actualTime?.text = SimpleDateFormat("mm:ss", Locale.getDefault()).format(mediaPlayer.currentPosition)
+                actualTime?.text = dateFormat.format(mediaPlayer.currentPosition)
                 mainThreadHandler?.postDelayed(this, DELAY)
             }
         }

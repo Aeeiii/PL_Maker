@@ -1,4 +1,4 @@
-package com.practicum.pl_maker
+package com.practicum.pl_maker.ui.tracklist
 
 import android.icu.text.SimpleDateFormat
 import android.view.LayoutInflater
@@ -8,6 +8,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.practicum.pl_maker.R
+import com.practicum.pl_maker.domain.models.Track
 import java.util.Locale
 
 class TrackHolder(parent: ViewGroup) :
@@ -26,7 +28,7 @@ class TrackHolder(parent: ViewGroup) :
         trackName.text = model.trackName
         musicianName.text = model.artistName
         trackTiming.text =
-            SimpleDateFormat("mm:ss", Locale.getDefault()).format(model.trackTimeMillis.toInt())
+            SimpleDateFormat("mm:ss", Locale.getDefault()).format(model.trackTimeMillis?.toInt())
 
         val imageUrl = model.artworkUrl100
 
