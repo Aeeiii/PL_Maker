@@ -1,6 +1,5 @@
 package com.practicum.pl_maker.creator
 
-import android.content.Context
 import android.content.SharedPreferences
 import com.practicum.pl_maker.data.network.RetrofitNetworkClient
 import com.practicum.pl_maker.data.network.TrackRepositoryImpl
@@ -25,16 +24,16 @@ object Creator {
         return TrackSharedPrefsImpl(SharedPrefsManager(sharedPreferences))
     }
 
-    private fun getSettingsSharedPrefs(context: Context): SettingsSharedPref {
-        return SettingsSharedPrefsImpl(SettingsManager(context))
+    private fun getSettingsSharedPrefs(sharedPreferences: SharedPreferences): SettingsSharedPref {
+        return SettingsSharedPrefsImpl(SettingsManager(sharedPreferences))
     }
 
     fun provideTracksInteractor(sharedPreferences: SharedPreferences): TracksInteractor {
         return TrackInteractorImpl(getTracksRepository(), getTrackSharedPrefs(sharedPreferences))
     }
 
-    fun provideSettingsInteractor(context: Context): SettingsInteractor {
-        return SettingsInteractorImpl(getSettingsSharedPrefs(context))
+    fun provideSettingsInteractor(sharedPreferences: SharedPreferences): SettingsInteractor {
+        return SettingsInteractorImpl(getSettingsSharedPrefs(sharedPreferences))
     }
 
 }
