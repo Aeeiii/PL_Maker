@@ -20,8 +20,8 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.practicum.pl_maker.creator.Creator.provideTracksInteractor
 import com.practicum.pl_maker.R
+import com.practicum.pl_maker.creator.Creator.provideTracksInteractor
 import com.practicum.pl_maker.domain.api.TracksInteractor
 import com.practicum.pl_maker.domain.models.Track
 import com.practicum.pl_maker.ui.player.PlayerActivity
@@ -54,6 +54,8 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
 
         val trackAdapter = TrackAdapter(trackList, this)
         var trackInteractor = provideTracksInteractor(this)
+
+        getSharedPreferences(SEARCH_HISTORY, MODE_PRIVATE)
 
 
         fun showSavedTracks() {
@@ -175,6 +177,7 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
 
 
 
+
         queryInput.setOnFocusChangeListener { view, hasFocus ->
             if (hasFocus && queryInput.text.isEmpty() && trackInteractor.getSavedTracks().size > 0) showSavedTracks() else hideSavedTracks()
         }
@@ -266,12 +269,13 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
         const val NO_REQUEST = "no request"
         const val REQUEST_DONE = "done"
         const val NO_RESULT = "no result"
-        const val NO_CONNECTION ="no connection"
+        const val NO_CONNECTION = "no connection"
         private var countValue: String = AMOUNT_DEF
         private var requestStatusFlag: String = NO_REQUEST
         private val trackList = ArrayList<Track>()
         private const val SEARCH_DEBOUNCE_DELAY = 2000L
         private const val CLICK_DEBOUNCE_DELAY = 1000L
+        const val SEARCH_HISTORY = "Search history"
     }
 
 

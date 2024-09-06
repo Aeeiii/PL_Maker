@@ -7,13 +7,11 @@ import com.practicum.pl_maker.data.sharedPref.SettingsManager
 import com.practicum.pl_maker.data.sharedPref.SettingsSharedPrefsImpl
 import com.practicum.pl_maker.data.sharedPref.SharedPrefsManager
 import com.practicum.pl_maker.data.sharedPref.TrackSharedPrefsImpl
-import com.practicum.pl_maker.domain.api.PlayerInteractor
 import com.practicum.pl_maker.domain.api.SettingsInteractor
 import com.practicum.pl_maker.domain.api.SettingsSharedPref
 import com.practicum.pl_maker.domain.api.TrackRepository
 import com.practicum.pl_maker.domain.api.TrackSharedPref
 import com.practicum.pl_maker.domain.api.TracksInteractor
-import com.practicum.pl_maker.domain.impl.PlayerInteractorImpl
 import com.practicum.pl_maker.domain.impl.SettingsInteractorImpl
 import com.practicum.pl_maker.domain.impl.TrackInteractorImpl
 

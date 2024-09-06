@@ -46,7 +46,8 @@ class PlayerActivity : AppCompatActivity() {
 
         setSupportActionBar(findViewById(R.id.my_toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        track = intent.getParcelableExtra("track", Track::class.java)!!
+        val intent = intent
+        track = intent.getParcelableExtra("track")!!
 
         val trackIcon = findViewById<ImageView>(R.id.track_icon)
         val trackName = findViewById<TextView>(R.id.track_name)
@@ -59,13 +60,11 @@ class PlayerActivity : AppCompatActivity() {
         val country = findViewById<TextView>(R.id.country_track)
         val url = track.previewUrl
 
-
         playButton = findViewById(R.id.play_button)
         actualTime = findViewById(R.id.actual_time)
         actualTime?.text = "00:00"
 
         mainThreadHandler = Handler(Looper.getMainLooper())
-
 
         trackName.text = track.trackName
         musicianName.text = track.artistName
