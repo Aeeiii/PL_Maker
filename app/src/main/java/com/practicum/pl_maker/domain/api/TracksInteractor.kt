@@ -4,7 +4,7 @@ import com.practicum.pl_maker.domain.models.Track
 
 interface TracksInteractor {
     fun searchTracks(expression: String, consumer: TracksConsumer)
-    fun getSavedTracks(): ArrayList<Track>
+    fun getSavedTracks(): List<Track>
     fun saveTrack(track: Track)
     fun cleanHistory()
 

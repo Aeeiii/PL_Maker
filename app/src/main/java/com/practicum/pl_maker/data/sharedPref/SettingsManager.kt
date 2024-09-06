@@ -2,12 +2,10 @@ package com.practicum.pl_maker.data.sharedPref
 
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
-import com.practicum.pl_maker.data.ChangeSaved
-import com.practicum.pl_maker.data.GetSavedClient
-import com.practicum.pl_maker.data.dto.SharedPrefs
+import com.practicum.pl_maker.data.SavedSettingsClient
 import com.practicum.pl_maker.data.dto.SharedPrefsSettings
 
-class SettingsManager(context: Context) : GetSavedClient, ChangeSaved {
+class SettingsManager(context: Context) : SavedSettingsClient {
     private val sharedPrefs = context.getSharedPreferences(THEME, MODE_PRIVATE)
     override fun getSaved(): SharedPrefsSettings{
         return SharedPrefsSettings(sharedPrefs.getBoolean(THEME_KEY, false))

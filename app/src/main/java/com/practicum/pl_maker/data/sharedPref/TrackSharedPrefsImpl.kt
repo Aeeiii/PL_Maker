@@ -1,13 +1,13 @@
 package com.practicum.pl_maker.data.sharedPref
 
-import com.practicum.pl_maker.data.SavedDataClient
+import com.practicum.pl_maker.data.SavedTracksClient
 import com.practicum.pl_maker.data.dto.SharedPrefsHistory
 import com.practicum.pl_maker.data.dto.TrackDto
 import com.practicum.pl_maker.domain.api.TrackSharedPref
 import com.practicum.pl_maker.domain.models.Track
 
 class TrackSharedPrefsImpl(
-    private val savedDataClient: SavedDataClient
+    private val savedDataClient: SavedTracksClient
 ): TrackSharedPref {
     override fun getSavedTracks(): ArrayList<Track> {
         val tracksListDto = savedDataClient.getSaved() as SharedPrefsHistory
@@ -31,39 +31,20 @@ class TrackSharedPrefsImpl(
     }
 
     override fun saveTrack(track: Track) {
-        val trackDto = track.trackName?.let {
-            track.artistName?.let { it1 ->
-                track.trackTimeMillis?.let { it2 ->
-                    track.artworkUrl100?.let { it3 ->
-                        track.collectionName?.let { it4 ->
-                            track.releaseDate?.let { it5 ->
-                                track.primaryGenreName?.let { it6 ->
-                                    track.country?.let { it7 ->
-                                        track.previewUrl?.let { it8 ->
-                                            TrackDto(
-                                                it,
-                                                it1,
-                                                it2,
-                                                it3,
-                                                track.trackId,
-                                                it4,
-                                                it5,
-                                                it6,
-                                                it7,
-                                                it8
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        if (trackDto != null) {
-            savedDataClient.save(trackDto)
-        }
+        savedDataClient.save(
+            TrackDto(
+                trackName = track.trackName ?: return,
+                artistName = track.artistName ?: return,
+                trackTimeMillis = track.trackTimeMillis ?: return,
+                artworkUrl100 = track.artworkUrl100 ?: return,
+                collectionName = track.collectionName ?: return,
+                releaseDate = track.releaseDate ?: return,
+                primaryGenreName = track.primaryGenreName ?: return,
+                country = track.country ?: return,
+                previewUrl = track.previewUrl ?: return,
+                trackId = track.trackId
+            )
+        )
 
     }
 

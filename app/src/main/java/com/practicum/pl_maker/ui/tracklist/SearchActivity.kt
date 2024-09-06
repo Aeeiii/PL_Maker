@@ -2,6 +2,7 @@ package com.practicum.pl_maker.ui.tracklist
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -22,6 +23,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.practicum.pl_maker.R
 import com.practicum.pl_maker.creator.Creator.provideTracksInteractor
+import com.practicum.pl_maker.data.sharedPref.SharedPrefsManager
 import com.practicum.pl_maker.domain.api.TracksInteractor
 import com.practicum.pl_maker.domain.models.Track
 import com.practicum.pl_maker.ui.player.PlayerActivity
@@ -31,6 +33,7 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
 
     private var isClickAllowed = true
     private val handler = Handler(Looper.getMainLooper())
+    private lateinit var sharedPreferences: SharedPreferences
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,13 +56,14 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
         val progressBar = findViewById<ProgressBar>(R.id.progressBar)
 
         val trackAdapter = TrackAdapter(trackList, this)
-        var trackInteractor = provideTracksInteractor(this)
+        sharedPreferences = getSharedPreferences(HISTORY_KEY, Context.MODE_PRIVATE)
+        var trackInteractor = provideTracksInteractor(sharedPreferences)
 
         getSharedPreferences(SEARCH_HISTORY, MODE_PRIVATE)
 
 
         fun showSavedTracks() {
-            trackInteractor = provideTracksInteractor(this)
+            trackInteractor = provideTracksInteractor(sharedPreferences)
             recyclerView.setItemViewCacheSize(trackInteractor.getSavedTracks().size)
             recyclerView.adapter = TrackAdapter(trackInteractor.getSavedTracks(), this)
             hintMessage.visibility = View.VISIBLE
@@ -110,7 +114,7 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
                 hideAll()
                 progressBar.visibility = View.VISIBLE
                 trackList.clear()
-                trackInteractor = provideTracksInteractor(this)
+                trackInteractor = provideTracksInteractor(sharedPreferences)
                 trackInteractor.searchTracks(countValue, object : TracksInteractor.TracksConsumer {
 
                     override fun consume(foundTracks: List<Track>, resultCode: Int) {
@@ -165,7 +169,9 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
 
                 searchDebounce()
 
-                if (queryInput.hasFocus() && s?.isEmpty() == true && trackInteractor.getSavedTracks().size > 0) showSavedTracks() else hideSavedTracks()
+                if (queryInput.hasFocus() && s?.isEmpty() == true && trackInteractor.getSavedTracks()
+                        .isNotEmpty()
+                ) showSavedTracks() else hideSavedTracks()
 
                 cleanButton.visibility = cleanButtonVisibility(s)
                 countValue = s.toString()
@@ -179,7 +185,9 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
 
 
         queryInput.setOnFocusChangeListener { view, hasFocus ->
-            if (hasFocus && queryInput.text.isEmpty() && trackInteractor.getSavedTracks().size > 0) showSavedTracks() else hideSavedTracks()
+            if (hasFocus && queryInput.text.isEmpty() && trackInteractor.getSavedTracks()
+                    .isNotEmpty()
+            ) showSavedTracks() else hideSavedTracks()
         }
 
         //отрисовываем с учетом сохраненного состояния
@@ -276,6 +284,7 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
         private const val SEARCH_DEBOUNCE_DELAY = 2000L
         private const val CLICK_DEBOUNCE_DELAY = 1000L
         const val SEARCH_HISTORY = "Search history"
+        const val HISTORY_KEY = "key"
     }
 
 
@@ -290,7 +299,7 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
 
     override fun onClickTrackHolder(track: Track) {
         if (clickDebounce()) {
-            val trackInteractor = provideTracksInteractor(this)
+            val trackInteractor = provideTracksInteractor(sharedPreferences)
             trackInteractor.saveTrack(track)
             val displayIntent = Intent(this, PlayerActivity::class.java)
             displayIntent.putExtra("track", track)

@@ -21,7 +21,7 @@ class TrackInteractorImpl (private val repository: TrackRepository, private val 
         }
     }
 
-    override fun getSavedTracks(): ArrayList<Track> {
+    override fun getSavedTracks(): List<Track> {
         return sharedPrefs.getSavedTracks()
     }
 

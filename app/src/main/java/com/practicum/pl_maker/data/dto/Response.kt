@@ -1,5 +1,3 @@
 package com.practicum.pl_maker.data.dto
 
-open class Response() {
-    var resultCode = 0
-}
+open class Response(var resultCode: Int)
