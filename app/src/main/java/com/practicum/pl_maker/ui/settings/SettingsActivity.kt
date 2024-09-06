@@ -1,4 +1,4 @@
-package com.practicum.pl_maker
+package com.practicum.pl_maker.ui.settings
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -9,6 +9,8 @@ import android.view.MenuItem
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
+import com.practicum.pl_maker.presentation.App
+import com.practicum.pl_maker.R
 
 class SettingsActivity : AppCompatActivity() {
 

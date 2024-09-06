@@ -1,7 +1,8 @@
-package com.practicum.pl_maker
+package com.practicum.pl_maker.ui.tracklist
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.practicum.pl_maker.domain.models.Track
 
 class TrackAdapter(
     private val track: List<Track>,

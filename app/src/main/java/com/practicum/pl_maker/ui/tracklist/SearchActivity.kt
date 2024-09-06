@@ -1,7 +1,8 @@
-package com.practicum.pl_maker
+package com.practicum.pl_maker.ui.tracklist
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -20,26 +21,19 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.gson.Gson
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import com.practicum.pl_maker.R
+import com.practicum.pl_maker.creator.Creator.provideTracksInteractor
+import com.practicum.pl_maker.data.sharedPref.SharedPrefsManager
+import com.practicum.pl_maker.domain.api.TracksInteractor
+import com.practicum.pl_maker.domain.models.Track
+import com.practicum.pl_maker.ui.player.PlayerActivity
 
 class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
 
 
-    private val iTunesBaseUrl = "https://itunes.apple.com"
-
-    private val retrofit =
-        Retrofit.Builder().baseUrl(iTunesBaseUrl).addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-    private val iTunesService = retrofit.create(ITunesSearchApi::class.java)
-
     private var isClickAllowed = true
     private val handler = Handler(Looper.getMainLooper())
+    private lateinit var sharedPreferences: SharedPreferences
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,17 +55,17 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
         val cleanHistoryButton = findViewById<Button>(R.id.clean_history_button)
         val progressBar = findViewById<ProgressBar>(R.id.progressBar)
 
-        val sharedPrefs = getSharedPreferences(SEARCH_HISTORY, MODE_PRIVATE)
-        var searchHistory = SearchHistory(sharedPrefs)
-
         val trackAdapter = TrackAdapter(trackList, this)
+        sharedPreferences = getSharedPreferences(HISTORY_KEY, Context.MODE_PRIVATE)
+        var trackInteractor = provideTracksInteractor(sharedPreferences)
+
+        getSharedPreferences(SEARCH_HISTORY, MODE_PRIVATE)
 
 
         fun showSavedTracks() {
-            searchHistory = SearchHistory(sharedPrefs)
-            val savedTrackAdapter = TrackAdapter(searchHistory.getSavedTracks(), this)
-            recyclerView.setItemViewCacheSize(searchHistory.savesTracks.size)
-            recyclerView.adapter = savedTrackAdapter
+            trackInteractor = provideTracksInteractor(sharedPreferences)
+            recyclerView.setItemViewCacheSize(trackInteractor.getSavedTracks().size)
+            recyclerView.adapter = TrackAdapter(trackInteractor.getSavedTracks(), this)
             hintMessage.visibility = View.VISIBLE
             cleanHistoryButton.visibility = View.VISIBLE
             recyclerView.visibility = View.VISIBLE
@@ -93,7 +87,7 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
 
 
         fun showConnectionError() {
-            requestStatusFlag = "no connection"
+            requestStatusFlag = NO_CONNECTION
             trackList.clear()
             recyclerView.adapter = trackAdapter
             errorLayout.visibility = View.VISIBLE
@@ -103,7 +97,7 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
         }
 
         fun showNoResults() {
-            requestStatusFlag = "no result"
+            requestStatusFlag = NO_RESULT
             recyclerView.adapter = trackAdapter
             searchErrorImage.setImageResource(R.drawable.light_mode)
             searchErrorText.setText(R.string.no_find_error)
@@ -111,43 +105,54 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
             updateButton.visibility = View.GONE
         }
 
-        fun response() {
+
+        fun tracksRequest() {
+
             if (countValue == "") {
-                requestStatusFlag = "no request"
+                requestStatusFlag = NO_REQUEST
             } else {
                 hideAll()
                 progressBar.visibility = View.VISIBLE
-                iTunesService.search(countValue).enqueue(object : Callback<TrackResponse> {
-                    override fun onResponse(
-                        call: Call<TrackResponse>, response: Response<TrackResponse>
-                    ) {
-                        progressBar.visibility =View.GONE
-                        trackList.clear()
-                        if (response.code() == 200) {
-                            if (response.body()?.results?.isNotEmpty() == true) {
-                                requestStatusFlag = "done"
-                                errorLayout.visibility = View.GONE
-                                trackList.addAll(response.body()?.results!!)
-                                recyclerView.setItemViewCacheSize(response.body()!!.resultCount)
-                                recyclerView.adapter = trackAdapter
-                                recyclerView.visibility = View.VISIBLE
+                trackList.clear()
+                trackInteractor = provideTracksInteractor(sharedPreferences)
+                trackInteractor.searchTracks(countValue, object : TracksInteractor.TracksConsumer {
+
+                    override fun consume(foundTracks: List<Track>, resultCode: Int) {
+                        runOnUiThread {
+                            progressBar.visibility = View.GONE
+                            if (resultCode == 200) {
+                                if (foundTracks.isNotEmpty()) {
+                                    requestStatusFlag = REQUEST_DONE
+                                    errorLayout.visibility = View.GONE
+                                    trackList.addAll(foundTracks)
+                                    recyclerView.setItemViewCacheSize(trackList.size)
+                                    recyclerView.adapter = trackAdapter
+                                    recyclerView.visibility = View.VISIBLE
+                                }
+                                if (trackList.isEmpty()) {
+                                    showNoResults()
+                                }
+                            } else {
+                                showConnectionError()
                             }
-                            if (trackList.isEmpty()) {
-                                showNoResults()
-                            }
-                        } else {
+                        }
+
+                    }
+
+                    override fun onFailure(t: Throwable) {
+                        runOnUiThread {
+                            progressBar.visibility = View.GONE
                             showConnectionError()
                         }
                     }
 
-                    override fun onFailure(call: Call<TrackResponse>, t: Throwable) {
-                        showConnectionError()
-                    }
                 })
+
+
             }
         }
 
-        val searchRunnable = Runnable { response() }
+        val searchRunnable = Runnable { tracksRequest() }
 
         fun searchDebounce() {
             handler.removeCallbacks(searchRunnable)
@@ -156,13 +161,17 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
 
         val simpleTextWatcher = object : TextWatcher {
 
+
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
             }
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
 
                 searchDebounce()
-                if (queryInput.hasFocus() && s?.isEmpty() == true && searchHistory.savesTracks.size > 0) showSavedTracks() else hideSavedTracks()
+
+                if (queryInput.hasFocus() && s?.isEmpty() == true && trackInteractor.getSavedTracks()
+                        .isNotEmpty()
+                ) showSavedTracks() else hideSavedTracks()
 
                 cleanButton.visibility = cleanButtonVisibility(s)
                 countValue = s.toString()
@@ -174,9 +183,11 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
 
 
 
+
         queryInput.setOnFocusChangeListener { view, hasFocus ->
-            searchHistory = SearchHistory(sharedPrefs)
-            if (hasFocus && queryInput.text.isEmpty() && searchHistory.getSavedTracks().size > 0) showSavedTracks() else hideSavedTracks()
+            if (hasFocus && queryInput.text.isEmpty() && trackInteractor.getSavedTracks()
+                    .isNotEmpty()
+            ) showSavedTracks() else hideSavedTracks()
         }
 
         //отрисовываем с учетом сохраненного состояния
@@ -184,29 +195,29 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
         queryInput.setText(countValue)
         cleanButton.visibility = cleanButtonVisibility(countValue)
         when (requestStatusFlag) {
-            "no request" -> {
+            NO_REQUEST -> {
                 hideAll()
             }
 
-            "done" -> {
+            REQUEST_DONE -> {
                 recyclerView.adapter = trackAdapter
                 recyclerView.visibility = View.VISIBLE
             }
 
-            "no result" -> showNoResults()
-            "no connection" -> showConnectionError()
+            NO_RESULT -> showNoResults()
+            NO_CONNECTION -> showConnectionError()
         }
 
         //
 
 
         updateButton.setOnClickListener {
-            response()
+            tracksRequest()
         }
 
         cleanButton.setOnClickListener {
             queryInput.setText("")
-            requestStatusFlag = "no request"
+            requestStatusFlag = NO_REQUEST
             errorLayout.visibility = View.GONE
             trackList.clear()
             hideSavedTracks()
@@ -217,7 +228,7 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
         }
 
         cleanHistoryButton.setOnClickListener {
-            searchHistory.cleanHistory()
+            trackInteractor.cleanHistory()
             hideSavedTracks()
         }
 
@@ -227,7 +238,7 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
 
         queryInput.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
-                response()
+                tracksRequest()
             }
             false
         }
@@ -263,18 +274,21 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
     private companion object {
         const val PRODUCT_AMOUNT = "TEXT"
         const val AMOUNT_DEF = ""
-        const val REQUEST_STATUS = "no request"
-        const val SEARCH_HISTORY = "Search history"
+        const val NO_REQUEST = "no request"
+        const val REQUEST_DONE = "done"
+        const val NO_RESULT = "no result"
+        const val NO_CONNECTION = "no connection"
         private var countValue: String = AMOUNT_DEF
-        private var requestStatusFlag: String = REQUEST_STATUS
+        private var requestStatusFlag: String = NO_REQUEST
         private val trackList = ArrayList<Track>()
         private const val SEARCH_DEBOUNCE_DELAY = 2000L
         private const val CLICK_DEBOUNCE_DELAY = 1000L
+        const val SEARCH_HISTORY = "Search history"
+        const val HISTORY_KEY = "key"
     }
 
 
-
-    private fun clickDebounce() : Boolean {
+    private fun clickDebounce(): Boolean {
         val current = isClickAllowed
         if (isClickAllowed) {
             isClickAllowed = false
@@ -285,13 +299,10 @@ class SearchActivity : AppCompatActivity(), TrackHolder.Listener {
 
     override fun onClickTrackHolder(track: Track) {
         if (clickDebounce()) {
-            val sharedPrefs = getSharedPreferences(SEARCH_HISTORY, MODE_PRIVATE)
-            val searchHistory = SearchHistory(sharedPrefs)
-            searchHistory.saveTrack(track)
+            val trackInteractor = provideTracksInteractor(sharedPreferences)
+            trackInteractor.saveTrack(track)
             val displayIntent = Intent(this, PlayerActivity::class.java)
-            val gson = Gson()
-            val json = gson.toJson(track)
-            displayIntent.putExtra("track", json)
+            displayIntent.putExtra("track", track)
             startActivity(displayIntent)
         }
 

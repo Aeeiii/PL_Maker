@@ -1,10 +1,14 @@
-package com.practicum.pl_maker
+package com.practicum.pl_maker.ui.main
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import com.practicum.pl_maker.R
+import com.practicum.pl_maker.ui.media.MediaActivity
+import com.practicum.pl_maker.ui.settings.SettingsActivity
+import com.practicum.pl_maker.ui.tracklist.SearchActivity
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

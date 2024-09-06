@@ -1,5 +1,6 @@
-package com.practicum.pl_maker
+package com.practicum.pl_maker.data.network
 
+import com.practicum.pl_maker.data.dto.TrackResponse
 import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Query

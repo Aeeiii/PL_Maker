@@ -1,10 +1,8 @@
-package com.practicum.pl_maker
+package com.practicum.pl_maker.ui.media
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.ImageView
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.practicum.pl_maker.R
 
 class MediaActivity : AppCompatActivity() {
 
